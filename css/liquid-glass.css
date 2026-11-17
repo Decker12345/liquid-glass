@@ -6,14 +6,18 @@
  * 用法:
  *   <link rel="stylesheet" href="css/liquid-glass.css">
  *   <div class="lg lg-card">...</div>
+ *
+ * 变量层级（就近优先）:
+ *   :root 默认  →  容器覆盖  →  元素自身覆盖
  */
 
 /* =========================================================
-   1. 参数层
-   所有 --lg-* 都可以在 :root、某个容器、或元素自身覆盖。
-   推荐按「组件级」覆盖，例如 .player-card { --lg-blur: 4px; }
+   1. 默认参数
+   注意：默认值必须写在 :root 而不是 .lg 上。
+   写在 .lg 上等于每个元素都自己声明了一份，
+   :root 的覆盖会被元素自身声明挡住，继承链就失效了。
    ========================================================= */
-.lg {
+:root {
 	/* ---- 形状 ---- */
 	--lg-radius: 20px;
 
@@ -27,6 +31,7 @@
 	--lg-tint-a: .08;            /* 渐变起点的着色透明度 */
 	--lg-tint-b: .02;            /* 渐变终点的着色透明度 */
 	--lg-tint-angle: 160deg;     /* 染色渐变方向 */
+	--lg-tint-mul: 1;            /* 着色倍数，降级时用来补偿 */
 
 	/* ---- 高光 ---- */
 	--lg-glow-a: .30;        /* 斜向扫光起点强度 */
@@ -49,23 +54,20 @@
 	--lg-my: 0%;
 	--lg-light-a: 0;
 	--lg-light-size: 160px;
-
-	/* ---- 组合函数（无需手改）---- */
-	--lg-fn: blur(var(--lg-blur)) saturate(var(--lg-saturate)) brightness(var(--lg-brightness));
-}
-
-/* JS 成功挂载折射滤镜后，会给元素加 data-lg-refract 属性 */
-.lg[data-lg-refract] {
-	--lg-fn: var(--lg-filter) blur(var(--lg-blur)) saturate(var(--lg-saturate)) brightness(var(--lg-brightness));
 }
 
 /* =========================================================
    2. 玻璃本体
-   注意：整块玻璃的"面"由 background-image 三层叠加而成
-        （指针高光 / 斜向扫光 / 染色），
-        不用 ::after，因此永远不会盖住文字，也不会产生层级问题。
+   整块玻璃的"面"由 background-image 四层叠加而成
+   （指针高光 / 斜向扫光 / 染色），不用 ::after，
+   因此永远不会盖住文字，也不会产生层级问题。
    ========================================================= */
 .lg {
+	/* 组合函数必须声明在元素上：custom property 里的 var() 在
+	   声明它的那一层就解析完了，写进 :root 会把根节点的值固化下来，
+	   容器级的 --lg-blur 覆盖就失效。 */
+	--lg-fn: blur(var(--lg-blur)) saturate(var(--lg-saturate)) brightness(var(--lg-brightness));
+
 	position: relative;
 	border-radius: var(--lg-radius);
 	/* 关键：清掉 <button>/<input> 等控件的浏览器默认底色，
@@ -90,8 +92,8 @@
 		/* ① 染色：几乎无色，只给玻璃一点"实体" */
 		linear-gradient(
 			var(--lg-tint-angle),
-			rgb(var(--lg-tint-rgb) / var(--lg-tint-a)),
-			rgb(var(--lg-tint-rgb) / var(--lg-tint-b))
+			rgb(var(--lg-tint-rgb) / calc(var(--lg-tint-a) * var(--lg-tint-mul))),
+			rgb(var(--lg-tint-rgb) / calc(var(--lg-tint-b) * var(--lg-tint-mul)))
 		);
 	box-shadow:
 		inset 0 0 0 1px rgb(255 255 255 / var(--lg-ring)),
@@ -103,6 +105,11 @@
 	-webkit-backdrop-filter: var(--lg-fn);
 	backdrop-filter: var(--lg-fn);
 	transition: box-shadow .25s ease, background-color .25s ease;
+}
+
+/* JS 成功挂载折射滤镜后，会给元素加 data-lg-refract 属性 */
+.lg[data-lg-refract] {
+	--lg-fn: var(--lg-filter) blur(var(--lg-blur)) saturate(var(--lg-saturate)) brightness(var(--lg-brightness));
 }
 
 /* =========================================================
@@ -202,15 +209,14 @@
 }
 
 /* =========================================================
-   5. 无折射时的降级提示（库不强制，纯装饰）
-   当浏览器不支持 backdrop-filter: url(#) 时，JS 会给 <html>
-   加 .lg-no-refract。上面的样式本身已经能用（纯模糊），
-   这里只提供一个可选的视觉补偿：把边缘和着色加强一点。
+   5. 无折射时的降级补偿（纯装饰）
+   不支持 backdrop-filter: url(#) 时，JS 会给 <html> 加
+   .lg-no-refract。上面的样式本身已经能用（纯模糊玻璃），
+   这里只把着色提高一档，让少了折射的版本不至于太"扁"。
    ========================================================= */
 .lg-no-refract .lg {
-	--lg-edge-top: .92;
-	--lg-edge-bottom: .36;
-	--lg-tint-a: calc(var(--lg-tint-a) + .03);
+	--lg-tint-mul: 1.4;
+	--lg-ring: .28;
 }
 
 @media (prefers-reduced-motion: reduce) {
