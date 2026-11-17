@@ -402,6 +402,11 @@ const vars = computed(() =&gt; ({ '--lg-blur': props.blur + 'px' }))
 			玻璃透明的本质是"透出背后的东西"。背后是一片白，透出来就是一层灰。
 			要么在背后放内容（图片、渐变、大字），要么降低 <code>--lg-tint-a</code>、提高 <code>--lg-edge-top</code>，靠边缘而不是靠填充来成形。
 		</p>
+		<p>
+			调参台里的<strong>「正文」「歌词」两个背景就是为这件事准备的</strong>：正文是浅色纸张 + 12.5px 两栏密集小字
+			（最难的一档），歌词是深色大字 + 明暗层次。切到「正文」时舞台会带上 <code>data-tone="light"</code>，
+			玻璃自动换成"抬边缘、压投影、文字转深色"的一套值——<strong>浅底和深底不要共用同一套变量</strong>。
+		</p>
 
 		<h3>7. Safari 需要 <code>-webkit-</code> 前缀</h3>
 		<p>本库两个都写了。自己写的时候漏掉前缀，Safari 会完全没效果（而不是部分效果）。</p>

@@ -108,10 +108,87 @@
 			linear-gradient(180deg, #0B1020, #05070D);
 	}
 
+	/* ---- 纯文字背景 ①：浅色正文（最难的场景：白纸 + 密集小字） ---- */
+	.bg-article {
+		background: linear-gradient(180deg, #F8F6F1 0%, #EFEBE2 100%);
+		color: #1D2028;
+	}
+	/* 用两栏 flex 而不是 column-count：列宽可控，不会出现"内容结束得早、右半边空着" */
+	.bg-article .paper {
+		position: absolute; inset: 0; overflow: hidden;
+		padding: 24px 28px 26px;
+		display: flex; flex-direction: column;
+		font-size: 12.5px; line-height: 1.92;
+	}
+	.bg-article .ptag {
+		margin-bottom: 8px;
+		font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: #8E8879;
+	}
+	.bg-article h2 {
+		margin: 0 0 12px;
+		font-size: 23px; line-height: 1.32; font-weight: 700; letter-spacing: -.01em; color: #14161C;
+	}
+	.bg-article .cols { flex: 1; min-height: 0; display: flex; gap: 30px; }
+	.bg-article .col { flex: 1 1 0; min-width: 0; }
+	.bg-article h3 { margin: 12px 0 5px; font-size: 13px; font-weight: 650; color: #14161C; }
+	.bg-article h3:first-child { margin-top: 0; }
+	.bg-article p { margin: 0 0 9px; text-align: justify; }
+	.bg-article .lead { font-size: 13.5px; color: #34383F; }
+	.bg-article blockquote {
+		margin: 11px 0; padding-left: 11px;
+		border-left: 2px solid #CBC4B4; color: #4C5058; font-style: italic;
+	}
+	.bg-article mark {
+		background: linear-gradient(transparent 60%, rgba(255,196,86,.6) 60%);
+		color: inherit;
+	}
+	.bg-article code {
+		font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+		font-size: 11px; padding: 1px 4px; border-radius: 4px;
+		background: rgba(20, 22, 28, .07); color: #3A3F49;
+	}
+
+	/* ---- 纯文字背景 ②：深色歌词（大字 + 明暗层次） ---- */
+	.bg-lyrics {
+		background: radial-gradient(72% 62% at 28% 18%, #17223C, #070A12 72%);
+	}
+	.bg-lyrics .lyric {
+		position: absolute; inset: 0;
+		padding: 26px 32px;
+		display: flex; align-items: center; gap: 34px;
+		-webkit-mask-image: linear-gradient(180deg, transparent, #000 16%, #000 84%, transparent);
+		mask-image: linear-gradient(180deg, transparent, #000 16%, #000 84%, transparent);
+	}
+	.bg-lyrics .lyric-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+	.bg-lyrics .l {
+		font-size: 26px; font-weight: 650; line-height: 1.55;
+		color: rgba(255, 255, 255, .24); letter-spacing: .01em;
+		white-space: nowrap;
+	}
+	.bg-lyrics .l.on {
+		color: #EAF1FF;
+		text-shadow: 0 0 28px rgba(120, 170, 255, .55);
+	}
+	.bg-lyrics .l.sm { font-size: 14px; font-weight: 500; color: rgba(255, 255, 255, .38); }
+	/* 右侧词曲信息：给背景再补一列密集中文，顺便平衡画面 */
+	.bg-lyrics .lyric-side {
+		flex: none; width: 190px; padding-left: 16px;
+		border-left: 1px solid rgba(255, 255, 255, .12);
+		display: flex; flex-direction: column; gap: 7px;
+		font-size: 12px; line-height: 1.5; color: rgba(255, 255, 255, .40);
+	}
+	.bg-lyrics .lyric-side .tag {
+		font-size: 9.5px; letter-spacing: .22em; text-transform: uppercase;
+		color: rgba(130, 175, 255, .85); margin-bottom: 2px;
+	}
+	.bg-lyrics .lyric-side .row2 { display: flex; gap: 10px; }
+	.bg-lyrics .lyric-side b { color: rgba(255, 255, 255, .74); font-weight: 500; }
+
 	/* 舞台内的演示组件 */
 	.bg-switch {
 		position: absolute; left: 14px; bottom: 14px; z-index: 20;
-		display: flex; gap: 6px; padding: 5px;
+		display: flex; flex-wrap: wrap; gap: 6px; padding: 5px;
+		max-width: calc(100% - 28px);
 		border-radius: 999px; background: rgba(10,14,24,.5);
 		-webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
 		border: 1px solid rgba(255,255,255,.1);
@@ -122,6 +199,33 @@
 		background: transparent; color: #9BA8C2; transition: .2s;
 	}
 	.bg-switch button.on { background: rgba(255,255,255,.14); color: #fff; }
+
+	/* 浅色文字背景：玻璃上的文字整体切深色，顺便验证"浅底上的白玻璃还立不立得住" */
+	.stage[data-tone="light"] .demo-nav,
+	.stage[data-tone="light"] .demo-card,
+	.stage[data-tone="light"] .demo-widget,
+	.stage[data-tone="light"] .demo-search,
+	.stage[data-tone="light"] .demo-tools .lg-btn { color: #14161C; }
+	.stage[data-tone="light"] .demo-nav .seg i { color: rgba(20,22,28,.55); }
+	.stage[data-tone="light"] .demo-nav .seg i.on { background: rgba(20,22,28,.10); color: #14161C; }
+	.stage[data-tone="light"] .demo-nav .me { border-color: rgba(20,22,28,.18); color: rgba(20,22,28,.6); }
+	.stage[data-tone="light"] .demo-card .s,
+	.stage[data-tone="light"] .demo-card .ctrls span,
+	.stage[data-tone="light"] .demo-widget .lbl { color: rgba(20,22,28,.55); }
+	.stage[data-tone="light"] .demo-card .bar { background: rgba(20,22,28,.16); }
+	.stage[data-tone="light"] .demo-card .bar i { background: rgba(20,22,28,.62); }
+	.stage[data-tone="light"] .demo-card .play { background: #1B2540; color: #fff; }
+	.stage[data-tone="light"] .hint-drag { color: rgba(20,22,28,.5); text-shadow: none; }
+	/* 浅底上白玻璃几乎没有填充可用，只能抬边缘、收阴影，靠厚度成形 */
+	.stage[data-tone="light"] .lg {
+		--lg-glow-a: .42;
+		--lg-glow-b: .16;
+		--lg-edge-top: .95;
+		--lg-edge-bottom: .34;
+		--lg-edge-side: .42;
+		--lg-ring: .5;
+		--lg-shadow: 0 10px 26px rgba(24, 38, 70, .13), 0 2px 8px rgba(24, 38, 70, .09);
+	}
 
 	/* 导航胶囊 */
 	.demo-nav {
@@ -333,6 +437,101 @@
 			<div class="bg bg-grid" data-bg="grid"></div>
 			<div class="bg bg-night" data-bg="night"></div>
 
+			<!-- 纯文字背景 ①：浅色正文，用来检验"玻璃压在密集小字上"的可读性 -->
+			<div class="bg bg-article" data-bg="article">
+				<div class="paper">
+					<div class="ptag">Interface Material · No.04</div>
+					<h2>液态玻璃压在文字上，到底该有多透明</h2>
+					<div class="cols">
+						<div class="col">
+							<p class="lead">
+								一块玻璃好不好看，取决于它背后的东西。放在纯色上，它几乎只剩一圈描边；放在照片上，
+								它开始有颜色；只有压在<mark>密集的文字</mark>上，你才会真正判断它是不是"太糊"。
+							</p>
+							<h3>一、先分清折射与模糊</h3>
+							<p>
+								模糊是把背景抹平，折射是把背景按曲率重新采样。前者让文字塌成一片灰雾，后者让文字的
+								边缘顺着玻璃的倒角弯过去——这弯折才是玻璃的体感来源。判断标准不是"看得清不清"，
+								而是"边缘有没有被掰弯"。
+							</p>
+							<p>
+								正文场景容错率最低：字号 12 到 14 像素、行距接近 1.9、笔画密度高。模糊半径一旦超过
+								10px，一整段话就会糊成灰色的带子；倒角宽度超过 0.3 时，靠近边缘的字会被拉出重影。
+							</p>
+							<h3>二、浅色背景是真正的压力测试</h3>
+							<p>
+								白纸上的玻璃没有颜色可借，只能靠边缘厚度成形。这时候高光要更亮，阴影要更收，
+								染色几乎归零——一旦上一层白色填充，玻璃立刻变成一块灰方块。
+							</p>
+							<blockquote>
+								经验值：浅底上把主着色透明度压到 0.03 以下，上边缘高光提到 0.9，外描边给到 0.5 左右。
+							</blockquote>
+						</div>
+						<div class="col">
+							<h3>三、文字本身也要让一步</h3>
+							<p>
+								玻璃上的文字需要一层极淡的描边或投影，否则会和背后高频的内容糊在一起。反过来，
+								不要把玻璃直接盖在正在阅读的正文上：导航、播放条、浮层可以，段落不行。
+							</p>
+							<p>
+								如果一定要盖，给背后那段文字加一点透明度衰减，或者在玻璃下方垫一层同色的柔光，
+								让采样区域先降噪再采样，效果会比单纯加大模糊好得多。
+							</p>
+							<h3>四、验收：把卡片拖动起来</h3>
+							<p>
+								把左边的播放卡拖到这段文字上，慢慢经过标题、正文、引用三种层级。三段文字的可读性
+								如果断崖式下跌，说明模糊过了；如果玻璃几乎没有存在感，说明边缘厚度不够。
+							</p>
+							<h3>五、浅色与深色的两套值</h3>
+							<p>
+								深色背景靠"染色 + 扫光"成形，浅色背景只能靠"边缘 + 阴影"成形，两者的变量配比不能
+								共用一套。本页的正文背景就是浅色档：把 <code>--lg-tint-a</code> 压到 0.02 附近，
+								再把 <code>--lg-edge-top</code> 提到 0.95，玻璃才立得住。
+							</p>
+							<p>
+								另一个细节是投影。浅底上的投影要比深底更浅、更散，带一点冷色（偏蓝）会更像真实的
+								散射光，纯黑投影会显脏。
+							</p>
+							<blockquote>
+								这一整段文字就是用来被玻璃压住的：字越密、行距越紧，玻璃的真实水平暴露得越彻底。
+							</blockquote>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- 纯文字背景 ②：深色歌词，大字 + 明暗层次，看边缘弯折是否干净 -->
+			<div class="bg bg-lyrics" data-bg="lyrics">
+				<div class="lyric">
+					<div class="lyric-main">
+						<div class="l sm">— 单曲循环 · 液态玻璃</div>
+						<div class="l">晚风把城市吹成一片海</div>
+						<div class="l">我在岸边等你回头</div>
+						<div class="l on">液态的光，从边缘慢慢溢出</div>
+						<div class="l">像一句没说完的告白</div>
+						<div class="l">被折射成两种颜色</div>
+						<div class="l sm">折射成两种颜色 / refracted in two colors</div>
+						<div class="l">我们把夜色折好收进口袋</div>
+						<div class="l">明天再拿出来晒一晒</div>
+						<div class="l">玻璃太厚的时候</div>
+						<div class="l">连影子都会变凉</div>
+						<div class="l sm">影子变凉 / shadows grow cold</div>
+					</div>
+					<div class="lyric-side">
+						<div class="tag">Credits</div>
+						<div class="row2"><b>作词</b><span>Decker</span></div>
+						<div class="row2"><b>作曲</b><span>Decker / 林间</span></div>
+						<div class="row2"><b>编曲</b><span>蓝色频率</span></div>
+						<div class="row2"><b>制作人</b><span>夜航工作室</span></div>
+						<div class="row2"><b>混音</b><span>第六录音棚</span></div>
+						<div class="row2"><b>母带</b><span>Sterling Sound</span></div>
+						<div class="row2"><b>发行</b><span>2026 · 液态唱片</span></div>
+						<div class="row2"><b>时长</b><span>03:41</span></div>
+						<div class="row2"><b>音质</b><span>Hi-Res 96kHz</span></div>
+					</div>
+				</div>
+			</div>
+
 			<!-- 导航胶囊 -->
 			<div class="lg demo-nav" data-lg-light>
 				<div class="dot"></div>
@@ -379,6 +578,8 @@
 			<div class="bg-switch" id="bgSwitch">
 				<button class="on" data-bg="aurora">极光</button>
 				<button data-bg="text">大字</button>
+				<button data-bg="article">正文</button>
+				<button data-bg="lyrics">歌词</button>
 				<button data-bg="grid">网格</button>
 				<button data-bg="night">夜空</button>
 			</div>
@@ -708,6 +909,8 @@
 		if (!b) return;
 		$$('.bg').forEach(function (el) { el.classList.toggle('active', el.dataset.bg === b.dataset.bg); });
 		$$('#bgSwitch button').forEach(function (x) { x.classList.toggle('on', x === b); });
+		// 浅色文字背景要连带把玻璃上的文字切成深色，否则白字白底
+		$('#stage').dataset.tone = b.dataset.bg === 'article' ? 'light' : 'dark';
 	});
 
 	/* ============ 拖动卡片 ============ */
