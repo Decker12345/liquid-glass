@@ -1,0 +1,221 @@
+/*!
+ * liquid-glass-kit v1.0.0
+ * 通用液态玻璃样式库 —— 全部参数走 CSS 变量，可直接覆盖
+ * 作者: Decker · 许可: MIT
+ *
+ * 用法:
+ *   <link rel="stylesheet" href="css/liquid-glass.css">
+ *   <div class="lg lg-card">...</div>
+ */
+
+/* =========================================================
+   1. 参数层
+   所有 --lg-* 都可以在 :root、某个容器、或元素自身覆盖。
+   推荐按「组件级」覆盖，例如 .player-card { --lg-blur: 4px; }
+   ========================================================= */
+.lg {
+	/* ---- 形状 ---- */
+	--lg-radius: 20px;
+
+	/* ---- 模糊（backdrop 部分）---- */
+	--lg-blur: 8px;         /* 模糊半径，0 = 不加模糊，只靠折射 */
+	--lg-saturate: 1.6;     /* 饱和度，>1 让背后的颜色更"活" */
+	--lg-brightness: 1.06;  /* 亮度，略提亮玻璃内部 */
+
+	/* ---- 着色 ---- */
+	--lg-tint-rgb: 255 255 255; /* 玻璃染色（空格分隔 RGB） */
+	--lg-tint-a: .08;            /* 渐变起点的着色透明度 */
+	--lg-tint-b: .02;            /* 渐变终点的着色透明度 */
+	--lg-tint-angle: 160deg;     /* 染色渐变方向 */
+
+	/* ---- 高光 ---- */
+	--lg-glow-a: .30;        /* 斜向扫光起点强度 */
+	--lg-glow-b: .12;        /* 斜向扫光终点强度 */
+	--lg-glow-angle: 115deg; /* 扫光角度 */
+
+	/* ---- 边缘厚度（靠 inset 阴影堆出玻璃的"体感"）---- */
+	--lg-ring: .22;          /* 最外 1px 描边 */
+	--lg-edge-top: .85;      /* 上边缘高光 */
+	--lg-edge-bottom: .30;   /* 下边缘反光 */
+	--lg-edge-side: .30;     /* 左右边缘 */
+
+	/* ---- 投影 ---- */
+	--lg-shadow:
+		0 12px 30px rgba(0, 0, 0, .28),
+		0 3px 10px rgba(0, 0, 0, .20);
+
+	/* ---- 指针跟随高光（data-lg-light 开启时）---- */
+	--lg-mx: 50%;
+	--lg-my: 0%;
+	--lg-light-a: 0;
+	--lg-light-size: 160px;
+
+	/* ---- 组合函数（无需手改）---- */
+	--lg-fn: blur(var(--lg-blur)) saturate(var(--lg-saturate)) brightness(var(--lg-brightness));
+}
+
+/* JS 成功挂载折射滤镜后，会给元素加 data-lg-refract 属性 */
+.lg[data-lg-refract] {
+	--lg-fn: var(--lg-filter) blur(var(--lg-blur)) saturate(var(--lg-saturate)) brightness(var(--lg-brightness));
+}
+
+/* =========================================================
+   2. 玻璃本体
+   注意：整块玻璃的"面"由 background-image 三层叠加而成
+        （指针高光 / 斜向扫光 / 染色），
+        不用 ::after，因此永远不会盖住文字，也不会产生层级问题。
+   ========================================================= */
+.lg {
+	position: relative;
+	border-radius: var(--lg-radius);
+	/* 关键：清掉 <button>/<input> 等控件的浏览器默认底色，
+	   否则 .lg 只会覆盖 background-image，UA 的灰底会从下面透出来 */
+	background-color: transparent;
+	background-image:
+		/* ③ 指针跟随的光斑（默认透明） */
+		radial-gradient(
+			var(--lg-light-size) circle at var(--lg-mx) var(--lg-my),
+			rgb(255 255 255 / var(--lg-light-a)),
+			rgba(255, 255, 255, 0) 70%
+		),
+		/* ② 斜向扫光：玻璃的"折面" */
+		linear-gradient(
+			var(--lg-glow-angle),
+			rgb(255 255 255 / var(--lg-glow-a)) 0%,
+			rgb(255 255 255 / calc(var(--lg-glow-a) * .25)) 22%,
+			rgba(255, 255, 255, 0) 45%,
+			rgb(255 255 255 / calc(var(--lg-glow-b) * .4)) 60%,
+			rgb(255 255 255 / var(--lg-glow-b)) 100%
+		),
+		/* ① 染色：几乎无色，只给玻璃一点"实体" */
+		linear-gradient(
+			var(--lg-tint-angle),
+			rgb(var(--lg-tint-rgb) / var(--lg-tint-a)),
+			rgb(var(--lg-tint-rgb) / var(--lg-tint-b))
+		);
+	box-shadow:
+		inset 0 0 0 1px rgb(255 255 255 / var(--lg-ring)),
+		inset 0 1.6px 1.2px -1px rgb(255 255 255 / var(--lg-edge-top)),
+		inset 0 -1.6px 1.2px -1px rgb(255 255 255 / var(--lg-edge-bottom)),
+		inset 1.4px 0 1.2px -1px rgb(255 255 255 / var(--lg-edge-side)),
+		inset -1.4px 0 1.2px -1px rgb(255 255 255 / calc(var(--lg-edge-side) * .85)),
+		var(--lg-shadow);
+	-webkit-backdrop-filter: var(--lg-fn);
+	backdrop-filter: var(--lg-fn);
+	transition: box-shadow .25s ease, background-color .25s ease;
+}
+
+/* =========================================================
+   3. 变体
+   ========================================================= */
+/* 清透：几乎只靠折射，适合浮在照片/封面上 */
+.lg--clear {
+	--lg-tint-a: .04;
+	--lg-tint-b: .01;
+	--lg-blur: 4px;
+	--lg-saturate: 1.9;
+	--lg-brightness: 1.1;
+	--lg-glow-a: .22;
+	--lg-glow-b: .08;
+}
+
+/* 磨砂：文字多的界面用，保证可读 */
+.lg--frost {
+	--lg-blur: 18px;
+	--lg-tint-a: .20;
+	--lg-tint-b: .10;
+	--lg-glow-a: .18;
+	--lg-edge-top: .55;
+}
+
+/* 纯折射：不加模糊（Chromium 里效果最"玻璃"） */
+.lg--thin {
+	--lg-blur: 0px;
+}
+
+/* 深色玻璃：暗色界面的导航/工具栏 */
+.lg--dark {
+	--lg-tint-rgb: 16 22 38;
+	--lg-tint-a: .42;
+	--lg-tint-b: .28;
+	--lg-glow-a: .16;
+	--lg-glow-b: .06;
+	--lg-ring: .18;
+	--lg-shadow: 0 12px 30px rgba(0, 0, 0, .45);
+}
+
+/* 淡彩玻璃：品牌色玻璃 */
+.lg--blue {
+	--lg-tint-rgb: 120 170 255;
+	--lg-tint-a: .16;
+	--lg-tint-b: .06;
+}
+
+/* =========================================================
+   4. 常用构件（可选，不用就删）
+   ========================================================= */
+.lg-card {
+	padding: 18px 20px;
+}
+
+.lg-pill {
+	--lg-radius: 999px;
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 10px 18px;
+}
+
+.lg-btn {
+	--lg-radius: 999px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 44px;
+	height: 44px;
+	padding: 0;
+	border: 0;
+	cursor: pointer;
+	color: inherit;
+	font: inherit;
+	-webkit-tap-highlight-color: transparent;
+	transition: transform .18s cubic-bezier(.22, 1.4, .36, 1), box-shadow .25s ease;
+}
+.lg-btn:active {
+	transform: scale(.94);
+}
+
+/* 拖拽中的玻璃：抬起感更强 */
+.lg.is-dragging {
+	--lg-glow-a: .45;
+	box-shadow:
+		inset 0 0 0 1px rgb(255 255 255 / .3),
+		inset 0 1.8px 1.4px -1px rgb(255 255 255 / .95),
+		inset 0 -1.8px 1.4px -1px rgb(255 255 255 / .35),
+		0 22px 48px rgba(0, 0, 0, .42),
+		0 6px 18px rgba(0, 0, 0, .30);
+}
+
+/* 玻璃上的文字：深色背景压一层极淡描边，避免与背后高频内容糊在一起 */
+.lg-text-safe {
+	text-shadow: 0 1px 2px rgba(0, 0, 0, .28);
+}
+
+/* =========================================================
+   5. 无折射时的降级提示（库不强制，纯装饰）
+   当浏览器不支持 backdrop-filter: url(#) 时，JS 会给 <html>
+   加 .lg-no-refract。上面的样式本身已经能用（纯模糊），
+   这里只提供一个可选的视觉补偿：把边缘和着色加强一点。
+   ========================================================= */
+.lg-no-refract .lg {
+	--lg-edge-top: .92;
+	--lg-edge-bottom: .36;
+	--lg-tint-a: calc(var(--lg-tint-a) + .03);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.lg,
+	.lg-btn {
+		transition: none !important;
+	}
+}

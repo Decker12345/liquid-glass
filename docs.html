@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Liquid Glass Kit · 使用报告</title>
+<style>
+	* { box-sizing: border-box; }
+	html { scroll-behavior: smooth; }
+	body {
+		margin: 0; background: #080B12; color: #DEE5F2;
+		font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+		-webkit-font-smoothing: antialiased; line-height: 1.75;
+	}
+	body::before {
+		content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+		background:
+			radial-gradient(55% 40% at 8% 0%, rgba(96,140,255,.14), transparent 70%),
+			radial-gradient(45% 36% at 95% 6%, rgba(170,110,255,.11), transparent 70%);
+	}
+	a { color: #8FB8FF; text-decoration: none; }
+	a:hover { text-decoration: underline; }
+	code {
+		font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+		font-size: .88em; padding: 2px 6px; border-radius: 5px;
+		background: rgba(127,176,255,.12); color: #A9C8FF;
+	}
+	pre {
+		background: #0A0E18; border: 1px solid rgba(255,255,255,.08);
+		border-radius: 12px; padding: 15px 17px; overflow-x: auto;
+		font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+		font-size: 12.5px; line-height: 1.7; color: #A9BBDA;
+	}
+	pre code { background: none; padding: 0; color: inherit; }
+
+	header {
+		position: sticky; top: 0; z-index: 40;
+		display: flex; align-items: center; gap: 13px;
+		padding: 13px 28px;
+		background: rgba(8,11,18,.78);
+		-webkit-backdrop-filter: blur(14px) saturate(1.4);
+		backdrop-filter: blur(14px) saturate(1.4);
+		border-bottom: 1px solid rgba(255,255,255,.07);
+	}
+	.logo {
+		width: 28px; height: 28px; border-radius: 9px;
+		background: linear-gradient(140deg,#7FB0FF,#4F76E8 55%,#9E7BFF);
+		box-shadow: inset 0 1px 1px rgba(255,255,255,.6);
+	}
+	header b { font-size: 14.5px; font-weight: 650; }
+	header .sp { flex: 1; }
+	header .lnk { font-size: 13px; color: #C6D2E8; padding: 6px 13px; border-radius: 999px; border: 1px solid rgba(255,255,255,.12); }
+
+	.wrap { position: relative; z-index: 1; display: grid; grid-template-columns: 218px minmax(0,1fr); gap: 40px; max-width: 1180px; margin: 0 auto; padding: 34px 28px 90px; }
+	@media (max-width: 900px) { .wrap { grid-template-columns: 1fr; } nav.toc { display: none; } }
+
+	nav.toc { position: sticky; top: 78px; align-self: start; font-size: 13px; }
+	nav.toc div { color: #66748D; font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; margin: 0 0 10px; }
+	nav.toc a { display: block; color: #93A2BC; padding: 6px 12px; border-radius: 8px; border-left: 2px solid transparent; }
+	nav.toc a:hover { background: rgba(255,255,255,.05); color: #fff; text-decoration: none; }
+
+	h1 { font-size: 30px; margin: 0 0 6px; letter-spacing: -.5px; font-weight: 700; }
+	.lead { color: #94A2BB; font-size: 14.5px; margin: 0 0 30px; }
+	h2 {
+		font-size: 19px; margin: 46px 0 14px; padding-top: 8px;
+		display: flex; align-items: center; gap: 9px;
+	}
+	h2::before { content: ""; width: 4px; height: 18px; border-radius: 3px; background: linear-gradient(180deg,#7FB0FF,#9E7BFF); }
+	h3 { font-size: 14.5px; margin: 24px 0 8px; color: #C8D5EA; }
+	p, li { font-size: 13.8px; color: #B3C0D6; }
+	ul { padding-left: 20px; }
+	li { margin: 5px 0; }
+	strong { color: #E4EBF8; font-weight: 600; }
+
+	table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 13px; }
+	th, td { text-align: left; padding: 9px 11px; border-bottom: 1px solid rgba(255,255,255,.07); vertical-align: top; }
+	th { color: #8B9AB4; font-weight: 600; font-size: 12px; letter-spacing: .03em; background: rgba(255,255,255,.03); }
+	td code { white-space: nowrap; }
+	tbody tr:hover { background: rgba(255,255,255,.025); }
+
+	.flow { display: flex; align-items: stretch; gap: 8px; margin: 18px 0; flex-wrap: wrap; }
+	.flow .step {
+		flex: 1 1 150px; background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.08);
+		border-radius: 13px; padding: 13px 14px;
+	}
+	.flow .step b { display: block; font-size: 12.5px; color: #9FC0F5; margin-bottom: 5px; }
+	.flow .step span { font-size: 12px; color: #8D9AB2; line-height: 1.6; }
+	.flow .arw { display: grid; place-items: center; color: #4C5A73; font-size: 15px; }
+
+	.callout {
+		border-left: 3px solid #6FA8FF; background: rgba(111,168,255,.08);
+		border-radius: 0 10px 10px 0; padding: 12px 16px; margin: 16px 0;
+		font-size: 13.2px; color: #B9CCEA;
+	}
+	.callout.warn { border-color: #FFB865; background: rgba(255,184,101,.08); color: #E8CDA6; }
+	.callout.ok { border-color: #5FD8A0; background: rgba(95,216,160,.08); color: #AEDCC6; }
+
+	.tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 999px; margin-left: 6px; vertical-align: 1px; }
+	.tag.y { background: rgba(95,216,160,.14); color: #6FE0AE; }
+	.tag.n { background: rgba(255,120,120,.14); color: #FF9A9A; }
+	.tag.p { background: rgba(255,184,101,.14); color: #FFC078; }
+	.ok-i { color: #6FE0AE; }
+	.no-i { color: #FF9A9A; }
+</style>
+</head>
+<body>
+
+<header>
+	<div class="logo"></div>
+	<b>Liquid Glass Kit · 使用报告</b>
+	<div class="sp"></div>
+	<a class="lnk" href="index.html">调参台</a>
+	<a class="lnk" href="https://github.com/Decker12345/liquid-glass" target="_blank" rel="noopener">GitHub</a>
+</header>
+
+<div class="wrap">
+	<nav class="toc">
+		<div>目录</div>
+		<a href="#what">一、这是什么</a>
+		<a href="#how">二、原理</a>
+		<a href="#start">三、三行接入</a>
+		<a href="#params">四、参数总表</a>
+		<a href="#variants">五、变体与构件</a>
+		<a href="#api">六、JS API</a>
+		<a href="#frameworks">七、框架集成</a>
+		<a href="#compat">八、兼容与降级</a>
+		<a href="#perf">九、性能预算</a>
+		<a href="#pitfalls">十、常见坑</a>
+		<a href="#design">十一、设计建议</a>
+		<a href="#platform">十二、跨端限制</a>
+	</nav>
+
+	<main>
+		<h1>液态玻璃 · 通用实现报告</h1>
+		<p class="lead">
+			一份可以直接拿去用的液态玻璃（Liquid Glass）方案：CSS 变量控制外观，JS 引擎负责真实折射，
+			从「一个按钮」到「整页系统」都能覆盖。本文既是设计说明，也是接线手册。
+		</p>
+
+		<h2 id="what">一、这是什么</h2>
+		<p>
+			液态玻璃不是「半透明白色 + 高斯模糊」。它有三个必须同时成立的要素，缺一个就会退化成毛玻璃或者塑料片：
+		</p>
+		<ul>
+			<li><strong>边缘折射</strong>：玻璃是有厚度的，边缘会像透镜一样把背后的画面<em>掰弯</em>、压缩。这是"液"的来源。</li>
+			<li><strong>极薄的染色</strong>：玻璃本体几乎无色（白底 α 通常 ≤ .08），只靠背后透上来的颜色存在。</li>
+			<li><strong>四边厚度高光</strong>：靠 inset 阴影在上下左右各压一条 1~2px 的高光/反光，玻璃的"体"由这四条边勾勒，而不是由白底填充。</li>
+		</ul>
+
+		<div class="callout">
+			<strong>一句话判断做对没有：</strong>把玻璃放到一片纯白背景上，如果它看起来是一块灰色方块，那就是毛玻璃；
+			如果几乎看不见、只剩一圈细边，那才是玻璃。
+		</div>
+
+		<h2 id="how">二、原理</h2>
+		<p>浏览器没有原生的"折射"能力，只能靠位移映射（displacement map）近似。整条链路是这样的：</p>
+
+		<div class="flow">
+			<div class="step"><b>① 圆角矩形 SDF</b><span>用有向距离场描述玻璃轮廓，得到每个像素到边缘的距离</span></div>
+			<div class="arw">→</div>
+			<div class="step"><b>② 生成位移图</b><span>在倒角带内按 sin 钟形算位移向量，写入 PNG 的 R/G 通道</span></div>
+			<div class="arw">→</div>
+			<div class="step"><b>③ feDisplacementMap</b><span>SVG 滤镜按 R/G 通道偏移像素；R/G/B 三通道用不同 scale 制造色散</span></div>
+			<div class="arw">→</div>
+			<div class="step"><b>④ backdrop-filter</b><span>把滤镜应用到元素<em>背后</em>的实时画面，拖动时逐帧更新</span></div>
+		</div>
+
+		<h3>位移为什么是钟形</h3>
+		<p>
+			位移量 <code>d(t) = sin(t·π)</code>，<code>t</code> 从 0（最外缘）走到 1（倒角带内边界）。
+			两端位移为 0，中段最大 —— 于是玻璃<strong>内部完全不变形</strong>，只有边缘一圈被掰弯，
+			正好对应真实玻璃厚边的观感。如果用线性或常量位移，整个面板会像水波纹一样整体扭曲，假的。
+		</p>
+
+		<h3>为什么每块同尺寸玻璃共用一个滤镜</h3>
+		<p>
+			位移图只跟尺寸 / 圆角 / 倒角宽度有关，与内容无关。所以库里按
+			<code>宽×高×圆角×倒角</code> 做了两级缓存：同尺寸的 20 个按钮只生成 1 张位移图、1 个 SVG 滤镜。
+			这是相对"每个元素一套滤镜"的关键优化，也让后期调参只需要改 <code>scale</code> 一个属性。
+		</p>
+
+		<h3>色散</h3>
+		<p>
+			真实玻璃对不同波长折射率不同，边缘会有极细的彩边。实现方式是把 R/G/B 拆成三路，
+			分别用 <code>1.04 / 1.0 / 0.96</code> 的倍率位移，最后 screen 混合回去。
+			<strong>倍率不能大</strong>：超过 ±10% 就会在大字号边缘出现肉眼可见的橙蓝重影，看起来像坏了而不是像玻璃。
+		</p>
+
+		<h2 id="start">三、三行接入</h2>
+		<pre><code>&lt;link rel="stylesheet" href="css/liquid-glass.css"&gt;
+
+&lt;div class="lg lg-card"&gt;任意内容&lt;/div&gt;
+
+&lt;script src="js/liquid-glass.js"&gt;&lt;/script&gt;</code></pre>
+		<p>
+			JS 文件加载后会自动扫描页面里所有 <code>.lg</code> 元素并挂载折射，不需要写任何初始化代码。
+			不想要折射、只要模糊玻璃的话，<strong>不引 JS 就行</strong> —— CSS 本身就是完整可用的降级版本。
+		</p>
+
+		<div class="callout ok">
+			<strong>想先调参数？</strong> 打开 <a href="index.html">index.html 调参台</a>，
+			右侧拖滑块、左侧实时预览，调好点「复制」，把 <code>:root</code> 那段贴进你的项目即可。
+		</div>
+
+		<h2 id="params">四、参数总表</h2>
+		<p>全部参数都是 CSS 变量，可以在 <code>:root</code>、某个容器、或元素自身覆盖（就近优先）。</p>
+
+		<h3>形状与模糊</h3>
+		<table>
+			<thead><tr><th>变量</th><th>含义</th><th>默认</th><th>建议范围</th></tr></thead>
+			<tbody>
+				<tr><td><code>--lg-radius</code></td><td>圆角</td><td>20px</td><td>0–999px（胶囊用 999px）</td></tr>
+				<tr><td><code>--lg-blur</code></td><td>背景模糊半径，0 = 纯折射</td><td>8px</td><td>0–30px，超过 20 就开始"糊"</td></tr>
+				<tr><td><code>--lg-saturate</code></td><td>饱和度，>1 让背后颜色更鲜活</td><td>1.6</td><td>1.2–2.2</td></tr>
+				<tr><td><code>--lg-brightness</code></td><td>亮度</td><td>1.06</td><td>0.95–1.15</td></tr>
+			</tbody>
+		</table>
+
+		<h3>着色与高光</h3>
+		<table>
+			<thead><tr><th>变量</th><th>含义</th><th>默认</th><th>建议范围</th></tr></thead>
+			<tbody>
+				<tr><td><code>--lg-tint-rgb</code></td><td>玻璃染色，空格分隔 RGB</td><td><code>255 255 255</code></td><td>深色界面用 <code>16 22 38</code></td></tr>
+				<tr><td><code>--lg-tint-a</code></td><td>渐变色起点透明度</td><td>.08</td><td>0–.15（超过就是磨砂了）</td></tr>
+				<tr><td><code>--lg-tint-b</code></td><td>渐变色终点透明度</td><td>.02</td><td>0–.10</td></tr>
+				<tr><td><code>--lg-tint-angle</code></td><td>染色渐变方向</td><td>160deg</td><td>0–180deg</td></tr>
+				<tr><td><code>--lg-glow-a</code></td><td>斜向扫光起点强度（玻璃的"折面"）</td><td>.30</td><td>.1–.45</td></tr>
+				<tr><td><code>--lg-glow-b</code></td><td>扫光收尾强度</td><td>.12</td><td>.05–.25</td></tr>
+				<tr><td><code>--lg-glow-angle</code></td><td>扫光角度</td><td>115deg</td><td>90–135deg</td></tr>
+			</tbody>
+		</table>
+
+		<h3>边缘厚度（决定"像不像玻璃"的关键）</h3>
+		<table>
+			<thead><tr><th>变量</th><th>含义</th><th>默认</th><th>建议范围</th></tr></thead>
+			<tbody>
+				<tr><td><code>--lg-ring</code></td><td>最外 1px 描边</td><td>.22</td><td>.15–.4</td></tr>
+				<tr><td><code>--lg-edge-top</code></td><td>上边缘高光（最重要的那条边）</td><td>.85</td><td>.55–1</td></tr>
+				<tr><td><code>--lg-edge-bottom</code></td><td>下边缘反光</td><td>.30</td><td>.15–.5</td></tr>
+				<tr><td><code>--lg-edge-side</code></td><td>左右边缘</td><td>.30</td><td>.15–.5</td></tr>
+				<tr><td><code>--lg-shadow</code></td><td>投影，可整段覆盖</td><td>两层柔影</td><td>浅色背景下要压到 .07 以下</td></tr>
+			</tbody>
+		</table>
+
+		<h3>引擎参数（JS，不是 CSS 变量）</h3>
+		<table>
+			<thead><tr><th>参数</th><th>含义</th><th>默认</th><th>建议</th></tr></thead>
+			<tbody>
+				<tr><td><code>refract</code></td><td>折射强度（%）。峰值位移 = refract% × min(20, 短边×0.12)</td><td>70</td><td>40–120；0 等于关掉折射</td></tr>
+				<tr><td><code>bezel</code></td><td>倒角带宽占短边比例，即"玻璃厚不厚"</td><td>0.15</td><td>0.10–0.25</td></tr>
+				<tr><td><code>dispersion</code></td><td>是否开色散</td><td>true</td><td>字号小的界面建议关掉</td></tr>
+				<tr><td><code>enabled</code></td><td>总开关</td><td>true</td><td>低端设备/低电量时关</td></tr>
+			</tbody>
+		</table>
+
+		<div class="callout warn">
+			<strong>为什么折射强度不做成 CSS 变量？</strong>
+			因为 <code>feDisplacementMap</code> 的 <code>scale</code> 是 SVG 属性，CSS 变量传不进去，
+			必须由 JS 写到 DOM 上。外观归 CSS、引擎归 JS，这条边界让两边都能独立替换。
+			单个元素想改倒角宽度，可以用 <code>data-lg-bezel="0.22"</code> 属性。
+		</div>
+
+		<h2 id="variants">五、变体与构件</h2>
+		<table>
+			<thead><tr><th>类名</th><th>用途</th><th>效果</th></tr></thead>
+			<tbody>
+				<tr><td><code>.lg</code></td><td>基础玻璃</td><td>标准厚度，适合通用面板</td></tr>
+				<tr><td><code>.lg--clear</code></td><td>浮在照片/封面上的控件</td><td>更透、模糊更少、更饱和</td></tr>
+				<tr><td><code>.lg--frost</code></td><td>文字多的界面</td><td>模糊 18px + 着色 .20，保证可读</td></tr>
+				<tr><td><code>.lg--thin</code></td><td>最"玻璃"的一档</td><td>blur 0，只靠折射和边缘</td></tr>
+				<tr><td><code>.lg--dark</code></td><td>暗色导航/工具栏</td><td>深色染色</td></tr>
+				<tr><td><code>.lg--blue</code></td><td>品牌色玻璃</td><td>淡蓝染色</td></tr>
+				<tr><td><code>.lg-card</code></td><td>卡片容器</td><td>内边距预设</td></tr>
+				<tr><td><code>.lg-pill</code></td><td>胶囊（搜索框、标签）</td><td>inline-flex + 999px</td></tr>
+				<tr><td><code>.lg-btn</code></td><td>圆形图标按钮</td><td>44×44，按下缩到 .94</td></tr>
+				<tr><td><code>.lg.is-dragging</code></td><td>拖动中的玻璃</td><td>高光加强、投影变大</td></tr>
+				<tr><td><code>.lg-text-safe</code></td><td>玻璃上的文字</td><td>极淡投影，避免与背后高频内容糊在一起</td></tr>
+			</tbody>
+		</table>
+
+		<h3>指针跟随高光</h3>
+		<p>给元素加 <code>data-lg-light</code>，玻璃表面会有一团跟着鼠标走的反光：</p>
+		<pre><code>&lt;div class="lg lg-card" data-lg-light&gt;…&lt;/div&gt;</code></pre>
+		<p>
+			实现上是一个 <code>radial-gradient</code> 背景层，位置由 <code>--lg-mx / --lg-my</code> 控制，
+			强度由 <code>--lg-light-a</code> 控制（默认 0，悬停时 JS 提到 .5）。
+			因为用的是 <strong>background-image 而不是伪元素</strong>，所以永远不会盖住文字，也不会影响点击。
+		</p>
+
+		<h2 id="api">六、JS API</h2>
+		<table>
+			<thead><tr><th>方法 / 属性</th><th>说明</th></tr></thead>
+			<tbody>
+				<tr><td><code>LiquidGlass.supported</code></td><td>布尔值，当前浏览器是否支持真折射</td></tr>
+				<tr><td><code>LiquidGlass.set({…})</code></td><td>改引擎参数，立即生效（改 bezel 会重建位移图）</td></tr>
+				<tr><td><code>LiquidGlass.scan(root?)</code></td><td>扫描并挂载新插入的 <code>.lg</code>（MutationObserver 已自动处理，一般不用手动调）</td></tr>
+				<tr><td><code>LiquidGlass.refresh(el?)</code></td><td>重新测量尺寸并重建；不传参数则全量刷新</td></tr>
+				<tr><td><code>LiquidGlass.mount(el, {light:true})</code></td><td>手动挂载（含可选指针高光）</td></tr>
+				<tr><td><code>LiquidGlass.destroy(el)</code></td><td>卸载，恢复到纯 CSS 模糊</td></tr>
+				<tr><td><code>data-lg="off"</code></td><td>标记该元素不参与折射（只保留 CSS 玻璃效果）</td></tr>
+			</tbody>
+		</table>
+
+		<h2 id="frameworks">七、框架集成</h2>
+		<h3>Vue 3 组件</h3>
+		<pre><code>&lt;template&gt;
+  &lt;div class="lg" :style="vars"&gt;&lt;slot /&gt;&lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+import { computed } from 'vue'
+const props = defineProps({ blur: { type: Number, default: 8 } })
+const vars = computed(() =&gt; ({ '--lg-blur': props.blur + 'px' }))
+&lt;/script&gt;</code></pre>
+
+		<h3>React 组件</h3>
+		<pre><code>export default function Glass({ blur = 8, className = '', ...rest }) {
+  return (
+    &lt;div
+      className={'lg ' + className}
+      style={{ '--lg-blur': blur + 'px' }}
+      {...rest}
+    /&gt;
+  )
+}</code></pre>
+
+		<h3>动态内容</h3>
+		<p>
+			元素尺寸变化后位移图必须重建，否则折射范围会跟实际尺寸错位。库内部用
+			<code>ResizeObserver</code> 做了 140ms 防抖重建，所以<strong>你不需要手动调 refresh</strong>。
+			只有一种情况要手动：元素用了 <code>transform: scale()</code> 之类改变视觉尺寸的变换 ——
+			这种变化不触发 ResizeObserver。
+		</p>
+
+		<h2 id="compat">八、兼容与降级</h2>
+		<table>
+			<thead><tr><th>浏览器</th><th>真折射</th><th>纯模糊玻璃</th><th>说明</th></tr></thead>
+			<tbody>
+				<tr><td>Chrome / Edge 110+</td><td class="ok-i">✔</td><td class="ok-i">✔</td><td>完整效果</td></tr>
+				<tr><td>Chrome / Edge 76–109</td><td class="no-i">✘</td><td class="ok-i">✔</td><td>模糊正常，折射退化</td></tr>
+				<tr><td>Safari 15.4+ / iOS</td><td class="no-i">✘</td><td class="ok-i">✔</td><td>WebKit 不支持在 backdrop-filter 里引用 SVG 滤镜</td></tr>
+				<tr><td>Firefox 103+</td><td class="no-i">✘</td><td class="ok-i">✔</td><td>同上</td></tr>
+				<tr><td>旧版 / 不支持 backdrop-filter</td><td class="no-i">✘</td><td class="p">△</td><td>只剩半透明底色，建议自行加实色兜底</td></tr>
+			</tbody>
+		</table>
+
+		<p>降级是<strong>自动且无感的</strong>：</p>
+		<ul>
+			<li>JS 探测到不支持时，不会给元素加 <code>data-lg-refract</code>，CSS 里的 <code>backdrop-filter</code> 就停在使用 <code>--lg-fn</code> 的模糊版本。</li>
+			<li>同时给 <code>&lt;html&gt;</code> 加 <code>.lg-no-refract</code>，库自带的补偿样式会把边缘高光和着色各提一点，让"没有折射"的版本也不至于太平。</li>
+			<li>想自己接管降级外观，写 <code>.lg-no-refract .lg { … }</code> 即可。</li>
+		</ul>
+
+		<h2 id="perf">九、性能预算</h2>
+		<p>backdrop-filter 的代价主要来自「每一帧重新截取背景 + 做一次模糊」，跟面积成正比。几条经验值：</p>
+		<table>
+			<thead><tr><th>项目</th><th>建议</th><th>原因</th></tr></thead>
+			<tbody>
+				<tr><td>同时可见的玻璃元素</td><td>≤ 12 个</td><td>每个都是一次独立的背景采样</td></tr>
+				<tr><td>单个元素面积</td><td>≤ 屏幕的 40%</td><td>大面板成本线性上升</td></tr>
+				<tr><td>blur 半径</td><td>≤ 20px</td><td>模糊核变大会成倍增加采样</td></tr>
+				<tr><td>唯一尺寸数</td><td>尽量少</td><td>同尺寸共用位移图与滤镜</td></tr>
+				<tr><td>列表/长滚动</td><td>只给吸顶/悬浮元素做玻璃</td><td>滚动中每帧都要重算</td></tr>
+			</tbody>
+		</table>
+		<div class="callout warn">
+			<strong>两个常见的性能雷：</strong>
+			① 玻璃里面再套玻璃 —— 嵌套 backdrop-filter 会让内层反复重采样，几乎必掉帧，而且视觉上也糊。
+			② 给整个滚动容器加玻璃 —— 应该只给固定的导航/底栏加，内容区用普通背景。
+		</div>
+
+		<h2 id="pitfalls">十、常见坑</h2>
+
+		<h3>1. 元素没有内容就看不见玻璃</h3>
+		<p><code>backdrop-filter</code> 需要有"背景"可采。空 div 高度为 0 时既不采样也不渲染。给个尺寸或内边距。</p>
+
+		<h3>2. 祖先元素有 <code>overflow: hidden</code> + <code>border-radius</code></h3>
+		<p>这种情况下玻璃边缘会被裁剪得很难看，尤其是位移把像素推到边界外时。让玻璃元素自己带圆角，别让祖先裁它。</p>
+
+		<h3>3. 祖先有 <code>filter</code> / <code>transform</code> / <code>will-change</code></h3>
+		<p>
+			这些都会创建新的层叠上下文或包含块，可能让 <code>backdrop-filter</code> 采样到错误的区域（采到的是祖先的快照而不是页面背景）。
+			必要时把玻璃元素 <code>position: fixed</code> 提到顶层。
+		</p>
+
+		<h3>4. <code>&lt;button&gt;</code> 变白</h3>
+		<p>
+			浏览器给表单控件自带 <code>background-color</code>，而 <code>.lg</code> 只设置了 <code>background-image</code>，
+			UA 的灰底会从下面透出来。本库已在 <code>.lg</code> 里写了 <code>background-color: transparent</code>；
+			自己写玻璃时记得加上。
+		</p>
+
+		<h3>5. 用 <code>::after</code> 画高光会盖住文字</h3>
+		<p>
+			这是最容易被忽略的 bug：伪元素铺满整块玻璃画斜向高光，如果没有 <code>pointer-events:none</code> 和正确的
+			<code>z-index</code>，它会把文字压灰、把按钮点不到。本库的做法是<strong>把高光全部并进 background-image</strong>，
+			从根本上消灭这个层级问题。
+		</p>
+
+		<h3>6. 玻璃叠在纯白背景上会发灰</h3>
+		<p>
+			玻璃透明的本质是"透出背后的东西"。背后是一片白，透出来就是一层灰。
+			要么在背后放内容（图片、渐变、大字），要么降低 <code>--lg-tint-a</code>、提高 <code>--lg-edge-top</code>，靠边缘而不是靠填充来成形。
+		</p>
+
+		<h3>7. Safari 需要 <code>-webkit-</code> 前缀</h3>
+		<p>本库两个都写了。自己写的时候漏掉前缀，Safari 会完全没效果（而不是部分效果）。</p>
+
+		<h3>8. 多个滤镜 id 冲突</h3>
+		<p>本库用 <code>lg-f1、lg-f2…</code> 自增 id 并做了按尺寸复用，不会冲突。手写时记得每个滤镜 id 唯一。</p>
+
+		<h2 id="design">十一、设计建议</h2>
+		<h3>什么时候用哪一档</h3>
+		<table>
+			<thead><tr><th>场景</th><th>推荐配置</th></tr></thead>
+			<tbody>
+				<tr><td>导航栏 / 工具栏（文字多）</td><td><code>.lg--frost</code>，blur 16–20，tint .18–.22</td></tr>
+				<tr><td>浮在封面/照片上的按钮</td><td><code>.lg--clear</code>，blur 3–6，tint .04</td></tr>
+				<tr><td>大卡片 / 弹窗</td><td><code>.lg</code>，blur 8–12，tint .08，refract 60–80</td></tr>
+				<tr><td>暗色界面</td><td><code>.lg--dark</code>，tint rgb 16 22 38，α .4</td></tr>
+				<tr><td>要"最玻璃"的展示效果</td><td><code>.lg--thin</code>，blur 0，refract 110–130，bezel .2</td></tr>
+			</tbody>
+		</table>
+
+		<h3>文字可读性</h3>
+		<ul>
+			<li>玻璃上的正文，背后最好有 <strong>≥ 40% 的白色遮罩</strong>或深色底；纯折射（blur 0）只适合标题和图标。</li>
+			<li>模糊半径本质上是"把背景细节抹平"，所以 <strong>blur 越大文字越安全</strong>，折射越强文字越危险 —— 两者要权衡。</li>
+			<li>小字号（&lt; 13px）在玻璃上会发灰，加 <code>.lg-text-safe</code> 或提高亮度。</li>
+		</ul>
+
+		<h3>动效</h3>
+		<p>
+			玻璃的"液"感一半来自运动。拖动时把 <code>.is-dragging</code> 加上，高光和投影同时加强，
+			松开再缓动回去，观感会好很多。注意 <code>transition</code> 只作用在 <code>box-shadow</code> 上，
+			别给 <code>backdrop-filter</code> 加过渡 —— 那会强制每帧重建滤镜。
+		</p>
+
+		<h2 id="platform">十二、跨端限制</h2>
+		<table>
+			<thead><tr><th>平台</th><th>真折射</th><th>原因</th></tr></thead>
+			<tbody>
+				<tr><td>Web（Chromium）</td><td class="ok-i">✔</td><td>完整支持</td></tr>
+				<tr><td>Web（Safari / Firefox）</td><td class="no-i">✘</td><td>backdrop-filter 不接受 SVG 滤镜引用</td></tr>
+				<tr><td>微信小程序</td><td class="no-i">✘</td><td>
+					小程序 WebView 不支持 <code>backdrop-filter: url(#)</code>，也不支持 <code>getContext('2d').putImageData</code> 生成位移图的完整链路；
+					只能用 blur + saturate + 四边高光的等价方案（另一份小程序项目里的 <code>.glass</code> 就是这个降级版本的实际落地）。
+				</td></tr>
+				<tr><td>React Native / Flutter</td><td class="no-i">✘</td><td>只有原生模糊，没有位移映射</td></tr>
+			</tbody>
+		</table>
+		<div class="callout">
+			<strong>结论：</strong>液态玻璃在 Web 上可以做到接近原生，在移动端原生容器里目前只能做到"通透 + 厚度"，
+			做不到"折射"。做设计稿时最好按降级形态出图，避免原生端还原不出来。
+		</div>
+
+		<h2>附：文件清单</h2>
+		<pre><code>liquid-glass/
+├── index.html              调参台（实时预览 + 参数面板 + 代码导出）
+├── docs.html               本文
+├── css/liquid-glass.css    样式库（全部参数走 CSS 变量）
+└── js/liquid-glass.js      折射引擎（SDF 位移图 + SVG 滤镜 + 缓存）</code></pre>
+		<p style="margin-top:26px;color:#66748D;font-size:12.5px">
+			版本 1.0.0 · MIT · 作者 Decker ·
+			<a href="https://github.com/Decker12345/liquid-glass">github.com/Decker12345/liquid-glass</a>
+		</p>
+	</main>
+</div>
+</body>
+</html>

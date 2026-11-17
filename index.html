@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Liquid Glass Kit · 液态玻璃调参台</title>
+<link rel="stylesheet" href="css/liquid-glass.css">
+<style>
+	* { box-sizing: border-box; }
+	html, body { margin: 0; }
+	body {
+		background: #080B12;
+		color: #E9EDF7;
+		font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+		-webkit-font-smoothing: antialiased;
+		min-height: 100vh;
+	}
+	body::before {
+		content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+		background:
+			radial-gradient(60% 40% at 12% 0%, rgba(96, 140, 255, .16), transparent 70%),
+			radial-gradient(50% 40% at 92% 8%, rgba(170, 110, 255, .13), transparent 70%);
+	}
+	::selection { background: rgba(107, 160, 255, .35); }
+
+	/* ---------- 顶栏 ---------- */
+	header {
+		position: sticky; top: 0; z-index: 50;
+		display: flex; align-items: center; gap: 14px;
+		padding: 14px 26px;
+		background: rgba(8, 11, 18, .72);
+		-webkit-backdrop-filter: blur(14px) saturate(1.4);
+		backdrop-filter: blur(14px) saturate(1.4);
+		border-bottom: 1px solid rgba(255, 255, 255, .07);
+	}
+	.logo {
+		width: 30px; height: 30px; border-radius: 9px; flex: none;
+		background: linear-gradient(140deg, #7FB0FF, #4F76E8 55%, #9E7BFF);
+		box-shadow: inset 0 1px 1px rgba(255,255,255,.6), 0 6px 16px rgba(79,118,232,.4);
+	}
+	.brand { font-size: 15px; font-weight: 650; letter-spacing: .2px; }
+	.brand span { color: #8D97AB; font-weight: 400; margin-left: 8px; font-size: 12.5px; }
+	.spacer { flex: 1; }
+	.badge {
+		font-size: 12px; padding: 5px 11px; border-radius: 999px;
+		border: 1px solid rgba(255,255,255,.12); color: #9FB0CC;
+		background: rgba(255,255,255,.04);
+	}
+	.badge.ok { color: #7FE3B0; border-color: rgba(127,227,176,.28); background: rgba(127,227,176,.08); }
+	.badge.warn { color: #FFC978; border-color: rgba(255,201,120,.3); background: rgba(255,201,120,.08); }
+	.tlink {
+		font-size: 13px; color: #C6D2E8; text-decoration: none;
+		padding: 7px 14px; border-radius: 999px;
+		border: 1px solid rgba(255,255,255,.12);
+		transition: .2s;
+	}
+	.tlink:hover { background: rgba(255,255,255,.08); color: #fff; }
+
+	/* ---------- 布局 ---------- */
+	main {
+		position: relative; z-index: 1;
+		display: grid; grid-template-columns: minmax(0, 1fr) 392px;
+		gap: 22px; padding: 22px 26px 40px;
+		max-width: 1680px; margin: 0 auto;
+	}
+	@media (max-width: 1120px) {
+		main { grid-template-columns: minmax(0, 1fr); }
+	}
+
+	/* ---------- 舞台 ---------- */
+	.stage-wrap { min-width: 0; }
+	.stage {
+		position: relative; width: 100%; height: min(74vh, 720px); min-height: 480px;
+		border-radius: 26px; overflow: hidden;
+		border: 1px solid rgba(255,255,255,.1);
+		box-shadow: 0 24px 70px rgba(0,0,0,.5);
+	}
+	.bg { position: absolute; inset: 0; opacity: 0; transition: opacity .5s ease; }
+	.bg.active { opacity: 1; }
+	.bg-aurora {
+		background:
+			radial-gradient(42% 46% at 18% 20%, rgba(255,138,190,.55), transparent 70%),
+			radial-gradient(44% 44% at 82% 14%, rgba(120,200,255,.55), transparent 70%),
+			radial-gradient(52% 52% at 68% 86%, rgba(130,235,190,.48), transparent 70%),
+			radial-gradient(44% 46% at 10% 84%, rgba(255,206,130,.5), transparent 70%),
+			linear-gradient(160deg, #131A2B, #0B1020 60%, #141024);
+	}
+	.bg-text {
+		background: linear-gradient(150deg, #0E1524, #1A1030 60%, #0A1526);
+		display: flex; align-items: center; justify-content: center;
+	}
+	.bg-text::after {
+		content: "LIQUID GLASS"; white-space: nowrap;
+		font-size: clamp(48px, 9vw, 132px); font-weight: 800; letter-spacing: -.02em;
+		color: rgba(255,255,255,.13);
+		-webkit-text-stroke: 1px rgba(255,255,255,.16);
+	}
+	.bg-grid {
+		background:
+			linear-gradient(90deg, rgba(120,170,255,.13) 1px, transparent 1px) 0 0 / 30px 30px,
+			linear-gradient(rgba(120,170,255,.13) 1px, transparent 1px) 0 0 / 30px 30px,
+			radial-gradient(70% 70% at 50% 40%, #1B2540, #0A0F1C);
+	}
+	.bg-night {
+		background:
+			radial-gradient(60% 50% at 76% 16%, rgba(120,150,255,.35), transparent 66%),
+			radial-gradient(50% 50% at 20% 78%, rgba(200,110,255,.28), transparent 70%),
+			linear-gradient(180deg, #0B1020, #05070D);
+	}
+
+	/* 舞台内的演示组件 */
+	.bg-switch {
+		position: absolute; left: 14px; bottom: 14px; z-index: 20;
+		display: flex; gap: 6px; padding: 5px;
+		border-radius: 999px; background: rgba(10,14,24,.5);
+		-webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+		border: 1px solid rgba(255,255,255,.1);
+	}
+	.bg-switch button {
+		border: 0; cursor: pointer; font: inherit; font-size: 12px;
+		padding: 6px 12px; border-radius: 999px;
+		background: transparent; color: #9BA8C2; transition: .2s;
+	}
+	.bg-switch button.on { background: rgba(255,255,255,.14); color: #fff; }
+
+	/* 导航胶囊 */
+	.demo-nav {
+		--lg-radius: 999px;
+		position: absolute; top: 18px; left: 18px; right: 18px; z-index: 10;
+		display: flex; align-items: center; gap: 10px;
+		padding: 9px 12px; color: #fff; font-size: 13px;
+	}
+	.demo-nav .dot {
+		width: 26px; height: 26px; border-radius: 50%; flex: none;
+		background: linear-gradient(140deg, #8FB8FF, #4F76E8);
+		box-shadow: inset 0 1px 1px rgba(255,255,255,.7);
+	}
+	.demo-nav b { font-weight: 600; letter-spacing: .2px; }
+	.demo-nav .seg { display: flex; gap: 2px; margin-left: 6px; }
+	.demo-nav .seg i {
+		font-style: normal; font-size: 12px; padding: 5px 11px; border-radius: 999px;
+		color: rgba(255,255,255,.62);
+	}
+	.demo-nav .seg i.on { background: rgba(255,255,255,.16); color: #fff; }
+	.demo-nav .me {
+		margin-left: auto; font-size: 11px; color: rgba(255,255,255,.7);
+		padding: 5px 11px; border-radius: 999px; border: 1px solid rgba(255,255,255,.16);
+	}
+
+	/* 可拖动播放卡 */
+	.demo-card {
+		position: absolute; left: 6%; top: 30%; z-index: 12;
+		width: 268px; padding: 14px; color: #fff;
+		cursor: grab; touch-action: none; user-select: none;
+		will-change: transform;
+	}
+	.demo-card.dragging { cursor: grabbing; }
+	.demo-card .row { display: flex; align-items: center; gap: 12px; }
+	.demo-card .cover {
+		width: 52px; height: 52px; border-radius: 14px; flex: none;
+		background: linear-gradient(140deg, #FF9BB5, #8B6BFF 55%, #56C8FF);
+		box-shadow: inset 0 1px 1px rgba(255,255,255,.4), 0 6px 16px rgba(0,0,0,.35);
+	}
+	.demo-card .t { font-size: 14px; font-weight: 600; }
+	.demo-card .s { font-size: 11.5px; color: rgba(255,255,255,.66); margin-top: 3px; }
+	.demo-card .bar {
+		margin-top: 13px; height: 4px; border-radius: 4px;
+		background: rgba(255,255,255,.22); overflow: hidden;
+	}
+	.demo-card .bar i { display: block; width: 42%; height: 100%; border-radius: 4px; background: rgba(255,255,255,.85); }
+	.demo-card .ctrls { display: flex; align-items: center; gap: 10px; margin-top: 13px; }
+	.demo-card .play {
+		width: 38px; height: 38px; border-radius: 50%;
+		display: grid; place-items: center;
+		background: rgba(255,255,255,.9); color: #1B2540; font-size: 13px;
+		box-shadow: 0 4px 14px rgba(0,0,0,.3);
+	}
+	.demo-card .ctrls span { font-size: 12px; color: rgba(255,255,255,.6); }
+	.hint-drag {
+		position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%);
+		font-size: 12px; color: rgba(255,255,255,.55); z-index: 15;
+		pointer-events: none; text-shadow: 0 1px 4px rgba(0,0,0,.5);
+	}
+
+	/* 右侧小构件 */
+	.demo-tools {
+		position: absolute; right: 24px; top: 42%; z-index: 11;
+		display: flex; flex-direction: column; gap: 10px;
+	}
+	.demo-tools .lg-btn { color: #fff; font-size: 15px; }
+	.demo-widget {
+		position: absolute; right: 24px; bottom: 24px; z-index: 11;
+		width: 186px; padding: 13px 15px; color: #fff;
+	}
+	.demo-widget .lbl { font-size: 11px; color: rgba(255,255,255,.6); }
+	.demo-widget .num { font-size: 26px; font-weight: 650; margin-top: 4px; letter-spacing: -.5px; }
+	.demo-search {
+		--lg-radius: 999px;
+		position: absolute; left: 6%; bottom: 62px; z-index: 11;
+		display: flex; align-items: center; gap: 9px;
+		padding: 10px 16px; color: rgba(255,255,255,.7); font-size: 12.5px;
+		width: 210px;
+	}
+
+	/* ---------- 参数面板 ---------- */
+	.panel {
+		display: flex; flex-direction: column; gap: 12px;
+		height: calc(100vh - 104px); position: sticky; top: 82px;
+	}
+	.panel-scroll {
+		display: flex; flex-direction: column; gap: 12px;
+		overflow-y: auto; flex: 1; min-height: 0; padding-right: 4px;
+	}
+	.panel-scroll {
+		-webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 26px), transparent);
+		mask-image: linear-gradient(180deg, #000 calc(100% - 26px), transparent);
+	}
+	.panel-scroll::-webkit-scrollbar { width: 8px; }
+	.panel-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 8px; }
+	.code-card { flex: none; }
+	@media (max-width: 1120px) {
+		.panel { height: auto; position: static; }
+		.panel-scroll { overflow: visible; }
+	}
+	.card {
+		background: rgba(255,255,255,.035);
+		border: 1px solid rgba(255,255,255,.08);
+		border-radius: 16px; padding: 14px 15px;
+	}
+	.card > h3 {
+		margin: 0 0 12px; font-size: 12.5px; font-weight: 600;
+		color: #97A5BF; letter-spacing: .04em; text-transform: uppercase;
+		display: flex; align-items: center; gap: 7px;
+	}
+	.card > h3::before {
+		content: ""; width: 3px; height: 12px; border-radius: 2px;
+		background: linear-gradient(180deg, #7FB0FF, #9E7BFF);
+	}
+	.presets { display: flex; flex-wrap: wrap; gap: 7px; }
+	.presets button {
+		font: inherit; font-size: 12.5px; cursor: pointer;
+		padding: 7px 13px; border-radius: 999px;
+		background: rgba(255,255,255,.05); color: #C8D3E8;
+		border: 1px solid rgba(255,255,255,.1); transition: .18s;
+	}
+	.presets button:hover { background: rgba(255,255,255,.11); color: #fff; }
+	.presets button.on {
+		background: linear-gradient(140deg, rgba(127,176,255,.9), rgba(120,110,255,.9));
+		color: #08101F; border-color: transparent; font-weight: 600;
+	}
+
+	.ctl { margin-bottom: 13px; }
+	.ctl:last-child { margin-bottom: 0; }
+	.ctl-head {
+		display: flex; align-items: baseline; justify-content: space-between;
+		font-size: 12.5px; color: #C2CDE0; margin-bottom: 7px; gap: 8px;
+	}
+	.ctl-head .k { color: #6C7A95; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10.5px; }
+	.ctl-head .v { color: #8FB8FF; font-family: ui-monospace, monospace; font-size: 11.5px; }
+	input[type=range] {
+		-webkit-appearance: none; appearance: none;
+		width: 100%; height: 4px; border-radius: 4px; outline: none;
+		background: rgba(255,255,255,.14); cursor: pointer;
+	}
+	input[type=range]::-webkit-slider-thumb {
+		-webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%;
+		background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.5); border: 0;
+	}
+	input[type=range]::-moz-range-thumb {
+		width: 14px; height: 14px; border: 0; border-radius: 50%; background: #fff;
+	}
+	.switch-row {
+		display: flex; align-items: center; justify-content: space-between;
+		font-size: 12.5px; color: #C2CDE0;
+	}
+	.sw {
+		width: 38px; height: 22px; border-radius: 999px; position: relative;
+		background: rgba(255,255,255,.14); cursor: pointer; transition: .2s; flex: none;
+	}
+	.sw::after {
+		content: ""; position: absolute; top: 3px; left: 3px;
+		width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: .2s;
+	}
+	.sw.on { background: linear-gradient(90deg, #6FA8FF, #9B7BFF); }
+	.sw.on::after { left: 19px; }
+	input[type=color] {
+		width: 34px; height: 24px; padding: 0; border: 1px solid rgba(255,255,255,.16);
+		border-radius: 7px; background: transparent; cursor: pointer;
+	}
+
+	.code-box {
+		position: relative;
+		background: #0A0E18; border: 1px solid rgba(255,255,255,.08);
+		border-radius: 12px; padding: 12px 13px;
+	}
+	.code-box pre {
+		margin: 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+		font-size: 11.5px; line-height: 1.65; color: #A9BBDA;
+		max-height: 196px; overflow: auto; white-space: pre;
+	}
+	.code-box pre b { color: #7FB0FF; font-weight: 500; }
+	.code-box pre i { color: #7FE3B0; font-style: normal; }
+	.copy {
+		position: absolute; right: 10px; top: 10px;
+		font: inherit; font-size: 11.5px; cursor: pointer;
+		padding: 5px 11px; border-radius: 8px;
+		background: rgba(127,176,255,.16); color: #A9C8FF;
+		border: 1px solid rgba(127,176,255,.3); transition: .18s;
+	}
+	.copy:hover { background: rgba(127,176,255,.28); }
+	.copy.done { background: rgba(127,227,176,.2); color: #7FE3B0; border-color: rgba(127,227,176,.4); }
+	.note { font-size: 11.5px; color: #6C7A95; line-height: 1.65; margin-top: 9px; }
+	.note code { color: #93A8C8; }
+</style>
+</head>
+<body>
+
+<header>
+	<div class="logo"></div>
+	<div class="brand">Liquid Glass Kit<span>v1.0 · 液态玻璃方案</span></div>
+	<div class="spacer"></div>
+	<div class="badge" id="compat">检测中…</div>
+	<a class="tlink" href="docs.html">使用报告</a>
+	<a class="tlink" href="https://github.com/Decker12345/liquid-glass" target="_blank" rel="noopener">GitHub</a>
+</header>
+
+<main>
+	<!-- ================= 舞台 ================= -->
+	<section class="stage-wrap">
+		<div class="stage" id="stage">
+			<div class="bg bg-aurora active" data-bg="aurora"></div>
+			<div class="bg bg-text" data-bg="text"></div>
+			<div class="bg bg-grid" data-bg="grid"></div>
+			<div class="bg bg-night" data-bg="night"></div>
+
+			<!-- 导航胶囊 -->
+			<div class="lg demo-nav" data-lg-light>
+				<div class="dot"></div>
+				<b>Liquid Glass</b>
+				<div class="seg"><i class="on">发现</i><i>歌单</i><i>我的</i></div>
+				<div class="me">Decker</div>
+			</div>
+
+			<!-- 可拖动播放卡 -->
+			<div class="lg lg-card demo-card" id="dragCard" data-lg-light>
+				<div class="row">
+					<div class="cover"></div>
+					<div>
+						<div class="t">液态玻璃</div>
+						<div class="s">Decker · 单曲</div>
+					</div>
+				</div>
+				<div class="bar"><i></i></div>
+				<div class="ctrls">
+					<div class="play">▶</div>
+					<span>01:24 / 03:41</span>
+				</div>
+			</div>
+
+			<!-- 右侧工具键 -->
+			<div class="demo-tools">
+				<button class="lg lg-btn" data-lg-light><span>♡</span></button>
+				<button class="lg lg-btn" data-lg-light><span>↗</span></button>
+				<button class="lg lg-btn" data-lg-light><span>⋯</span></button>
+			</div>
+
+			<!-- 小挂件 -->
+			<div class="lg lg-card demo-widget" data-lg-light>
+				<div class="lbl">本周听歌</div>
+				<div class="num">12.4 h</div>
+			</div>
+
+			<!-- 搜索胶囊 -->
+			<div class="lg demo-search" data-lg-light>
+				<span>⌕</span><span>搜索歌曲、歌手</span>
+			</div>
+
+			<div class="hint-drag">拖动卡片看折射实时变化</div>
+			<div class="bg-switch" id="bgSwitch">
+				<button class="on" data-bg="aurora">极光</button>
+				<button data-bg="text">大字</button>
+				<button data-bg="grid">网格</button>
+				<button data-bg="night">夜空</button>
+			</div>
+		</div>
+	</section>
+
+	<!-- ================= 参数面板 ================= -->
+	<aside class="panel">
+		<div class="panel-scroll">
+			<div class="card">
+				<h3>预设</h3>
+				<div class="presets" id="presets"></div>
+			</div>
+
+			<div class="card" id="panelBody"><!-- 由 JS 生成 --></div>
+		</div>
+
+		<div class="card code-card">
+			<h3>当前配置 <span style="margin-left:auto;font-size:10.5px;color:#5D6B84;letter-spacing:0;text-transform:none">可滚动</span></h3>
+			<div class="code-box">
+				<button class="copy" id="copyBtn">复制</button>
+				<pre id="codeOut"></pre>
+			</div>
+			<p class="note">
+				把这段贴进你的 CSS，再 <code>LiquidGlass.set({…})</code> 一行即可复现。
+				也可以直接把变量写在 <code>.lg</code> 或某个容器上，做局部覆盖。
+			</p>
+		</div>
+	</aside>
+</main>
+
+<script src="js/liquid-glass.js"></script>
+<script>
+(function () {
+	'use strict';
+
+	/* ============ 状态 ============ */
+	// css: 直接写进 :root 的变量；js: 传给 LiquidGlass.set 的引擎参数
+	var state = {
+		'--lg-blur': 8,
+		'--lg-saturate': 1.6,
+		'--lg-brightness': 1.06,
+		'--lg-tint-rgb': [255, 255, 255],
+		'--lg-tint-a': 0.08,
+		'--lg-tint-b': 0.02,
+		'--lg-tint-angle': 160,
+		'--lg-glow-a': 0.30,
+		'--lg-glow-b': 0.12,
+		'--lg-glow-angle': 115,
+		'--lg-ring': 0.22,
+		'--lg-edge-top': 0.85,
+		'--lg-edge-bottom': 0.30,
+		'--lg-edge-side': 0.30,
+		'--lg-radius': 24,
+		refract: 70,
+		bezel: 0.15,
+		dispersion: true,
+		light: true,
+		bg: 'aurora'
+	};
+
+	/* ============ 控件定义 ============ */
+	var GROUPS = [
+		{
+			title: '折射（JS 引擎）',
+			items: [
+				{ key: 'refract', label: '折射强度', min: 0, max: 150, step: 1, unit: '%', js: true, unitless: true },
+				{ key: 'bezel', label: '倒角宽度', min: 0.05, max: 0.35, step: 0.01, js: true, unitless: true, digits: 2, cost: true },
+				{ key: 'dispersion', label: '色散（RGB 分离）', type: 'switch', js: true }
+			]
+		},
+		{
+			title: '模糊与色调',
+			items: [
+				{ key: '--lg-blur', label: '模糊半径', min: 0, max: 30, step: 0.5, unit: 'px' },
+				{ key: '--lg-saturate', label: '饱和度', min: 0.5, max: 3, step: 0.05, digits: 2 },
+				{ key: '--lg-brightness', label: '亮度', min: 0.8, max: 1.4, step: 0.01, digits: 2 }
+			]
+		},
+		{
+			title: '着色',
+			items: [
+				{ key: '--lg-tint-rgb', label: '玻璃颜色', type: 'color' },
+				{ key: '--lg-tint-angle', label: '染色方向', min: 0, max: 180, step: 1, unit: 'deg' },
+				{ key: '--lg-tint-a', label: '主着色透明度', min: 0, max: 0.5, step: 0.01, digits: 2 },
+				{ key: '--lg-tint-b', label: '次着色透明度', min: 0, max: 0.3, step: 0.01, digits: 2 }
+			]
+		},
+		{
+			title: '高光与边缘',
+			items: [
+				{ key: '--lg-glow-a', label: '扫光强度', min: 0, max: 0.6, step: 0.01, digits: 2 },
+				{ key: '--lg-glow-b', label: '扫光收尾强度', min: 0, max: 0.4, step: 0.01, digits: 2 },
+				{ key: '--lg-glow-angle', label: '扫光角度', min: 0, max: 180, step: 1, unit: 'deg' },
+				{ key: '--lg-ring', label: '外描边', min: 0, max: 0.8, step: 0.01, digits: 2 },
+				{ key: '--lg-edge-top', label: '上边缘高光', min: 0, max: 1, step: 0.01, digits: 2 },
+				{ key: '--lg-edge-bottom', label: '下边缘反光', min: 0, max: 1, step: 0.01, digits: 2 },
+				{ key: '--lg-edge-side', label: '侧边反光', min: 0, max: 1, step: 0.01, digits: 2 }
+			]
+		},
+		{
+			title: '形状与交互',
+			items: [
+				{ key: '--lg-radius', label: '圆角（卡片类）', min: 0, max: 44, step: 1, unit: 'px' },
+				{ key: 'light', label: '指针跟随高光', type: 'switch', js: true }
+			]
+		}
+	];
+
+	/* ============ 预设 ============ */
+	var PRESETS = {
+		'标准': { '--lg-blur': 8, '--lg-saturate': 1.6, '--lg-brightness': 1.06, '--lg-tint-a': 0.08, '--lg-tint-b': 0.02, '--lg-glow-a': 0.30, '--lg-glow-b': 0.12, '--lg-tint-rgb': [255, 255, 255], refract: 70, bezel: 0.15, dispersion: true },
+		'清透': { '--lg-blur': 3, '--lg-saturate': 2.0, '--lg-brightness': 1.08, '--lg-tint-a': 0.04, '--lg-tint-b': 0.01, '--lg-glow-a': 0.22, '--lg-glow-b': 0.08, '--lg-tint-rgb': [255, 255, 255], refract: 110, bezel: 0.22, dispersion: true },
+		'磨砂': { '--lg-blur': 20, '--lg-saturate': 1.35, '--lg-brightness': 1.05, '--lg-tint-a': 0.22, '--lg-tint-b': 0.12, '--lg-glow-a': 0.16, '--lg-glow-b': 0.06, '--lg-tint-rgb': [255, 255, 255], refract: 40, bezel: 0.12, dispersion: false },
+		'纯折射': { '--lg-blur': 0, '--lg-saturate': 1.85, '--lg-brightness': 1.05, '--lg-tint-a': 0.03, '--lg-tint-b': 0.01, '--lg-glow-a': 0.26, '--lg-glow-b': 0.10, '--lg-tint-rgb': [255, 255, 255], refract: 125, bezel: 0.24, dispersion: true },
+		'深色': { '--lg-blur': 12, '--lg-saturate': 1.4, '--lg-brightness': 0.95, '--lg-tint-a': 0.42, '--lg-tint-b': 0.26, '--lg-glow-a': 0.14, '--lg-glow-b': 0.05, '--lg-tint-rgb': [16, 22, 38], refract: 60, bezel: 0.14, dispersion: true },
+		'紫夜': { '--lg-blur': 10, '--lg-saturate': 1.7, '--lg-brightness': 1.04, '--lg-tint-a': 0.16, '--lg-tint-b': 0.05, '--lg-glow-a': 0.34, '--lg-glow-b': 0.14, '--lg-tint-rgb': [150, 120, 255], refract: 85, bezel: 0.18, dispersion: true }
+	};
+
+	/* ============ 工具 ============ */
+	function $(s, r) { return (r || document).querySelector(s); }
+	function $$(s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); }
+	var rootStyle = document.documentElement.style;
+
+	function fmt(v, item) {
+		if (Array.isArray(v)) return v.join(' ');
+		if (typeof v === 'number') {
+			var d = item && item.digits != null ? item.digits : 0;
+			var s = v.toFixed(d);
+			if (item && item.unit) s += item.unit;
+			return s;
+		}
+		return v;
+	}
+	function hexToRgb(hex) {
+		var m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+		return m ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)] : [255, 255, 255];
+	}
+	function rgbToHex(a) {
+		return '#' + a.map(function (n) { return ('0' + Math.max(0, Math.min(255, n | 0)).toString(16)).slice(-2); }).join('');
+	}
+
+	/* ============ 面板生成 ============ */
+	var panel = $('#panelBody');
+
+	GROUPS.forEach(function (g) {
+		var card = document.createElement('div');
+		card.className = 'card';
+		var h = document.createElement('h3');
+		h.textContent = g.title;
+		card.appendChild(h);
+
+		g.items.forEach(function (it) {
+			var wrap = document.createElement('div');
+			wrap.className = 'ctl';
+
+			if (it.type === 'switch') {
+				wrap.innerHTML =
+					'<div class="switch-row"><span>' + it.label + '</span>' +
+					'<div class="sw" data-sw="' + it.key + '"></div></div>';
+				var sw = wrap.querySelector('.sw');
+				sw.addEventListener('click', function () {
+					state[it.key] = !state[it.key];
+					sw.classList.toggle('on', state[it.key]);
+					apply();
+					clearPreset();
+				});
+				card.appendChild(wrap);
+				return;
+			}
+
+			if (it.type === 'color') {
+				wrap.innerHTML =
+					'<div class="ctl-head"><span>' + it.label + '<span class="k"> ' + (it.css || '') + '</span></span>' +
+					'<input type="color" value="' + rgbToHex(state[it.key]) + '"></div>';
+				var cp = wrap.querySelector('input');
+				cp.addEventListener('input', function () {
+					state[it.key] = hexToRgb(cp.value);
+					apply(); clearPreset(); syncCode();
+				});
+				card.appendChild(wrap);
+				return;
+			}
+
+			var val = state[it.key];
+			wrap.innerHTML =
+				'<div class="ctl-head"><span>' + it.label +
+				'<span class="k"> ' + (it.css || '') + '</span></span>' +
+				'<span class="v" data-v="' + it.key + '">' + fmt(val, it) + '</span></div>' +
+				'<input type="range" min="' + it.min + '" max="' + it.max + '" step="' + it.step + '" value="' + val + '">';
+
+			var inp = wrap.querySelector('input');
+			var out = wrap.querySelector('.v');
+			inp.addEventListener('input', function () {
+				state[it.key] = parseFloat(inp.value);
+				out.textContent = fmt(state[it.key], it);
+				if (it.cost) { scheduleApply(120); } else { apply(); }
+				clearPreset(); syncCode();
+			});
+			card.appendChild(wrap);
+		});
+
+		panel.appendChild(card);
+	});
+
+	/* ============ 应用 ============ */
+	var bezelTimer = 0;
+	function scheduleApply(ms) {
+		clearTimeout(bezelTimer);
+		bezelTimer = setTimeout(function () { apply(); }, ms);
+	}
+
+	function apply() {
+		// CSS 变量
+		Object.keys(state).forEach(function (k) {
+			if (k.indexOf('--lg-') !== 0) return;
+			var item = null;
+			GROUPS.forEach(function (g) {
+				g.items.forEach(function (it) { if (it.key === k) item = it; });
+			});
+			var v = state[k];
+			if (Array.isArray(v)) v = v.join(' ');
+			else if (typeof v === 'number') v = v.toFixed(item && item.digits != null ? item.digits : 0) + (item && item.unit ? item.unit : '');
+			rootStyle.setProperty(k, v);
+		});
+
+		// 引擎参数
+		LiquidGlass.set({
+			refract: state.refract,
+			bezel: state.bezel,
+			dispersion: state.dispersion,
+			enabled: true
+		});
+
+		document.body.classList.toggle('no-light', !state.light);
+		syncCode();
+	}
+
+	/* ============ 代码输出 ============ */
+	function syncCode() {
+		var lines = [':root {'];
+		GROUPS.forEach(function (g) {
+			g.items.forEach(function (it) {
+				if (it.type === 'switch') return;               // 色散/高光开关不是 CSS 变量
+				var name = it.css || it.key;
+				if (!name || name.indexOf('--lg-') !== 0) return; // 折射/倒角属于 JS 参数
+				var v = state[it.key];
+				if (Array.isArray(v)) v = v.join(' ');
+				else if (typeof v === 'number') v = v.toFixed(it.digits != null ? it.digits : 0) + (it.unit ? it.unit : '');
+				lines.push('  ' + name + ': ' + v + ';');
+			});
+		});
+		lines.push('}');
+		lines.push('');
+		lines.push('/* JS 一行接入折射引擎 */');
+		lines.push('LiquidGlass.set({');
+		lines.push('  refract: ' + state.refract + ',');
+		lines.push('  bezel: ' + state.bezel.toFixed(2) + ',');
+		lines.push('  dispersion: ' + state.dispersion);
+		lines.push('});');
+
+		$('#codeOut').textContent = lines.join('\n');
+	}
+
+	/* ============ 预设按钮 ============ */
+	var presetWrap = $('#presets');
+	Object.keys(PRESETS).forEach(function (name) {
+		var b = document.createElement('button');
+		b.textContent = name;
+		b.addEventListener('click', function () {
+			Object.assign(state, PRESETS[name]);
+			$$('#presets button').forEach(function (x) { x.classList.toggle('on', x === b); });
+			syncControls();
+			apply();
+		});
+		presetWrap.appendChild(b);
+	});
+	function clearPreset() {
+		$$('#presets button').forEach(function (x) { x.classList.remove('on'); });
+	}
+
+	/* 把 state 回写到控件上（预设切换时用） */
+	function syncControls() {
+		var ranges = panel.querySelectorAll('input[type=range]');
+		var colors = panel.querySelectorAll('input[type=color]');
+		var ri = 0, ci = 0;
+		GROUPS.forEach(function (g) {
+			g.items.forEach(function (it) {
+				if (it.type === 'switch') return;
+				if (it.type === 'color') {
+					var c = colors[ci++];
+					if (c) c.value = rgbToHex(state[it.key]);
+					return;
+				}
+				var inp = ranges[ri++];
+				if (!inp) return;
+				inp.value = state[it.key];
+				var out = inp.parentNode.querySelector('.v');
+				if (out) out.textContent = fmt(state[it.key], it);
+			});
+		});
+		$$('.sw[data-sw]', panel).forEach(function (sw) {
+			sw.classList.toggle('on', !!state[sw.dataset.sw]);
+		});
+	}
+
+	/* ============ 复制 ============ */
+	$('#copyBtn').addEventListener('click', function () {
+		var btn = this;
+		var text = $('#codeOut').textContent;
+		var done = function () {
+			btn.classList.add('done'); btn.textContent = '已复制';
+			setTimeout(function () { btn.classList.remove('done'); btn.textContent = '复制'; }, 1400);
+		};
+		if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, done);
+		else {
+			var ta = document.createElement('textarea');
+			ta.value = text; document.body.appendChild(ta); ta.select();
+			try { document.execCommand('copy'); } catch (e) {}
+			document.body.removeChild(ta); done();
+		}
+	});
+
+	/* ============ 背景切换 ============ */
+	$('#bgSwitch').addEventListener('click', function (e) {
+		var b = e.target.closest('button[data-bg]');
+		if (!b) return;
+		$$('.bg').forEach(function (el) { el.classList.toggle('active', el.dataset.bg === b.dataset.bg); });
+		$$('#bgSwitch button').forEach(function (x) { x.classList.toggle('on', x === b); });
+	});
+
+	/* ============ 拖动卡片 ============ */
+	(function () {
+		var card = $('#dragCard');
+		var sx = 0, sy = 0, ox = 0, oy = 0, dragging = false;
+		card.addEventListener('pointerdown', function (e) {
+			if (e.target.closest('.play')) return;
+			dragging = true;
+			sx = e.clientX; sy = e.clientY; ox = card._x || 0; oy = card._y || 0;
+			card.classList.add('dragging');
+			card.setPointerCapture(e.pointerId);
+		});
+		card.addEventListener('pointermove', function (e) {
+			if (!dragging) return;
+			var x = ox + e.clientX - sx;
+			var y = oy + e.clientY - sy;
+			card._x = x; card._y = y;
+			card.style.transform = 'translate(' + x + 'px,' + y + 'px)';
+		});
+		function end(e) {
+			if (!dragging) return;
+			dragging = false;
+			card.classList.remove('dragging');
+			try { card.releasePointerCapture(e.pointerId); } catch (err) {}
+		}
+		card.addEventListener('pointerup', end);
+		card.addEventListener('pointercancel', end);
+	})();
+
+	/* ============ 兼容性徽标 ============ */
+	(function () {
+		var el = $('#compat');
+		if (LiquidGlass.supported) {
+			el.className = 'badge ok';
+			el.textContent = '真折射已启用';
+		} else {
+			el.className = 'badge warn';
+			el.textContent = '当前浏览器不支持折射，已降级为模糊';
+		}
+	})();
+
+	/* ============ 启动 ============ */
+	// 指针高光总开关：关掉时用 !important 压掉内联值
+	var style = document.createElement('style');
+	style.textContent = '.no-light .lg{--lg-light-a:0 !important}';
+	document.head.appendChild(style);
+
+	syncControls();
+	apply();
+	var first = $$('#presets button')[0];
+	if (first) first.classList.add('on');
+})();
+</script>
+</body>
+</html>
